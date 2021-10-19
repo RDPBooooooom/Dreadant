@@ -329,7 +329,8 @@ MonoBehaviour:
   playerPrefab: {fileID: 4623225510215529405, guid: c22b3894e1a79244eb07134e366b527f, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 4340014827682396236, guid: b9c41479dff4e2646b49b96456f87956, type: 3}
 --- !u!4 &1001079653
 Transform:
   m_ObjectHideFlags: 0
@@ -449,7 +450,7 @@ Transform:
   m_GameObject: {fileID: 1365122905}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 5, y: 1, z: 5}
   m_Children:
   - {fileID: 763674810}
   m_Father: {fileID: 0}
