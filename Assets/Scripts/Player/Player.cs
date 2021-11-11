@@ -9,23 +9,38 @@ public class Player : NetworkBehaviour
 	private InputAction movementAction;
 	private InputAction camAction;
 
-	private new Rigidbody rigidbody;
+#pragma warning disable CS0108 // Member hides inherited member; missing new keyword
+	private Rigidbody rigidbody;
+#pragma warning restore CS0108 // Member hides inherited member; missing new keyword
 
 	[Header("Cam")]
 	[SerializeField] private Camera playerCam;
 	[SerializeField] private float camSpeed;
 
 	[Header("Stats")]
+	[SerializeField] private float maxHealth;
 	[SerializeField] [SyncVar] private float health;
 	[SerializeField] private float speed;
 	[SerializeField] private float jumpStrength;
+	[SerializeField] private float maxSpeed;
 
 	[SerializeField] private Weapon weapon;
+	public bool IsAlive { get; private set; }
+
+	public delegate void PlayerDiedDelagate(Player player);
+
+	public event PlayerDiedDelagate PlayerDiedEvent;
+
 
 	// Start is called before the first frame update
 	void Start()
 	{
 		rigidbody = GetComponent<Rigidbody>();
+		rigidbody.maxAngularVelocity = 0.1f;
+		IsAlive = true;
+		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = false;
+
 		if (!isLocalPlayer)
 		{
 			playerCam.enabled = false;
@@ -41,8 +56,6 @@ public class Player : NetworkBehaviour
 		if (!isLocalPlayer) return;
 
 		CmdUpdateRotation(camAction.ReadValue<Vector2>());
-
-
 	}
 
 	private void FixedUpdate()
@@ -58,13 +71,10 @@ public class Player : NetworkBehaviour
 	{
 		if (health <= 0)
 		{
-			NetworkServer.Destroy(gameObject);
-		}
-	}
+			IsAlive = false;
+			PlayerDiedEvent.Invoke(this);
 
-	private bool IsGrounded()
-	{
-		return Physics.Raycast(transform.position + transform.up * 0.5f, -Vector3.up, 0.5f + 0.1f);
+		}
 	}
 
 	#region Input
@@ -74,7 +84,13 @@ public class Player : NetworkBehaviour
 		if (IsGrounded())
 		{
 			Vector3 force = (GetMovementVector(input) * Time.fixedDeltaTime * speed) * 100;
-			rigidbody.AddForce(force);
+
+			Vector3 currentSpeed = rigidbody.velocity;
+
+			if (currentSpeed.magnitude < maxSpeed)
+			{
+				rigidbody.AddForce(force);
+			}
 		}
 	}
 
@@ -111,12 +127,35 @@ public class Player : NetworkBehaviour
 		weapon.Fire();
 	}
 
+	[TargetRpc]
+	public void RPCSetTeam(GameManager.Teams team)
+	{
+		FindObjectOfType<GameUI>().PlayerTeam = team;
+	}
+
 	[Server]
 	public void TakeDamage(float toTake)
 	{
 		health -= toTake;
 
 		CheckHealth();
+	}
+
+	/// <summary>
+	/// Resets basic Player stats.
+	/// !!Doesn't reset is alive!!
+	/// </summary>
+	[Server]
+	public void ResetPlayer()
+	{
+		health = maxHealth;
+	}
+
+	[Server]
+	public void FullResetPlayer()
+	{
+		ResetPlayer();
+		IsAlive = true;
 	}
 
 	/// <summary>
@@ -137,6 +176,10 @@ public class Player : NetworkBehaviour
 		return movement;
 	}
 
+	private bool IsGrounded()
+	{
+		return Physics.Raycast(transform.position + transform.up * 0.5f, -Vector3.up, 0.5f + 0.1f);
+	}
 	#endregion
 
 	private void OnEnable()

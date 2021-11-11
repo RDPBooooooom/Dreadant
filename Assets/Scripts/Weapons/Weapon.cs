@@ -31,9 +31,6 @@ public class Weapon : MonoBehaviour
 		tmpProjectile.TravelSpeed = projectileTravelSpeed;
 
 		NetworkServer.Spawn(instantiated);
-
-
-		Debug.Log("Play Animation on Client");
 	}
 }
 

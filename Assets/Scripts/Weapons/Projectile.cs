@@ -36,7 +36,7 @@ public class Projectile : NetworkBehaviour
 		}
 	}
 
-	private void OnCollisionEnter(Collision collision)
+	public void OnCollisionEnter(Collision collision)
 	{
 		if (!isServer) return;
 
@@ -46,7 +46,6 @@ public class Projectile : NetworkBehaviour
 		{
 			playerHit.TakeDamage(GetBulletDamage());
 		}
-
 		NetworkServer.Destroy(gameObject);
 	}
 
