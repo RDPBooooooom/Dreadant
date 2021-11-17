@@ -39,7 +39,6 @@ public class Player : NetworkBehaviour
 		rigidbody.maxAngularVelocity = 0.1f;
 		IsAlive = true;
 		Cursor.lockState = CursorLockMode.Locked;
-		Cursor.visible = false;
 
 		if (!isLocalPlayer)
 		{
@@ -75,6 +74,37 @@ public class Player : NetworkBehaviour
 			PlayerDiedEvent.Invoke(this);
 
 		}
+	}
+
+	[TargetRpc]
+	public void RPCSetTeam(GameManager.Teams team)
+	{
+		FindObjectOfType<GameUI>().PlayerTeam = team;
+	}
+
+	[Server]
+	public void TakeDamage(float toTake)
+	{
+		health -= toTake;
+
+		CheckHealth();
+	}
+
+	/// <summary>
+	/// Resets basic Player stats.
+	/// !!Doesn't reset is alive!!
+	/// </summary>
+	[Server]
+	public void ResetPlayer()
+	{
+		health = maxHealth;
+	}
+
+	[Server]
+	public void FullResetPlayer()
+	{
+		ResetPlayer();
+		IsAlive = true;
 	}
 
 	#region Input
@@ -127,37 +157,6 @@ public class Player : NetworkBehaviour
 		weapon.Fire();
 	}
 
-	[TargetRpc]
-	public void RPCSetTeam(GameManager.Teams team)
-	{
-		FindObjectOfType<GameUI>().PlayerTeam = team;
-	}
-
-	[Server]
-	public void TakeDamage(float toTake)
-	{
-		health -= toTake;
-
-		CheckHealth();
-	}
-
-	/// <summary>
-	/// Resets basic Player stats.
-	/// !!Doesn't reset is alive!!
-	/// </summary>
-	[Server]
-	public void ResetPlayer()
-	{
-		health = maxHealth;
-	}
-
-	[Server]
-	public void FullResetPlayer()
-	{
-		ResetPlayer();
-		IsAlive = true;
-	}
-
 	/// <summary>
 	/// Get Vector3 based on transform.rotation
 	/// </summary>
@@ -180,7 +179,15 @@ public class Player : NetworkBehaviour
 	{
 		return Physics.Raycast(transform.position + transform.up * 0.5f, -Vector3.up, 0.5f + 0.1f);
 	}
+
+	public void Leave()
+	{
+		CustomNetworkRoomManager manager = (CustomNetworkRoomManager) NetworkManager.singleton;
+		manager.Leave();
+	}
 	#endregion
+
+
 
 	private void OnEnable()
 	{
@@ -188,6 +195,7 @@ public class Player : NetworkBehaviour
 
 		inputMaster.Player.Fire.performed += ctx => GetFireShot();
 		inputMaster.Player.Jump.performed += ctx => GetJump();
+		inputMaster.Player.Leave.performed += ctx => Leave();
 
 		movementAction = inputMaster.Player.Move;
 		camAction = inputMaster.Player.Look;

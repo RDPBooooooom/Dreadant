@@ -76,7 +76,6 @@ public class GameManager : NetworkBehaviour
 	{
 		foreach (NetworkRoomPlayer roomPlayer in manager.roomSlots)
 		{
-			Debug.Log("Room player:" + roomPlayer.connectionToClient.identity.gameObject.name);
 			Player player = roomPlayer.connectionToClient.identity.gameObject.GetComponent<Player>();
 			AddToTeam(player);
 		}
@@ -109,6 +108,8 @@ public class GameManager : NetworkBehaviour
 
 	private void OnSetupDone()
 	{
+		if (!isServer) return;
+
 		SpawnTeams();
 		SetupPlayerDiedEvent(teamOne);
 		SetupPlayerDiedEvent(teamTwo);
@@ -159,6 +160,7 @@ public class GameManager : NetworkBehaviour
 
 	private void CheckTeamLose()
 	{
+		if (!isServer) return;
 
 		if (IsTeamDead(teamOne))
 		{
@@ -200,6 +202,32 @@ public class GameManager : NetworkBehaviour
 		}
 
 		return allPlayersDead;
+	}
+
+	public void OnPlayerDisconnected(Player p)
+	{
+		if (teamOne.Contains(p))
+		{
+			teamOne.Remove(p);
+
+			if (teamOne.Count == 0)
+			{
+				CustomNetworkRoomManager manager = (CustomNetworkRoomManager)NetworkManager.singleton;
+				manager.Leave();
+			}
+		}
+		if (teamTwo.Contains(p))
+		{
+			teamTwo.Remove(p);
+
+			if (teamTwo.Count == 0)
+			{
+				CustomNetworkRoomManager manager = (CustomNetworkRoomManager)NetworkManager.singleton;
+				manager.Leave();
+			}
+		}
+
+		CheckTeamLose();
 	}
 
 	public enum Teams

@@ -23,10 +23,12 @@ public class NetworkHUD : NetworkBehaviour
 	private List<ReadyCheckUI> readyCheckMenus;
 
 	private bool isHosting;
+	 public string IpAdress { get; set; }
 
 	private void Awake()
 	{
 		isHosting = false;
+		IpAdress = "localhost";
 	}
 
 	public void StartHost()
@@ -52,7 +54,9 @@ public class NetworkHUD : NetworkBehaviour
 	public void StartClient()
 	{
 		CheckManager();
+
 		manager.StartClient();
+		manager.networkAddress = IpAdress;
 
 		ActivateReadyCheck();
 		readyButton.gameObject.SetActive(false);
@@ -75,14 +79,20 @@ public class NetworkHUD : NetworkBehaviour
 
 	private void ActivateMain()
 	{
-		mainMenu.SetActive(true);
-		readyCheckMenu.SetActive(false);
+		if (mainMenu != null && readyCheckMenu != null)
+		{
+			mainMenu.SetActive(true);
+			readyCheckMenu.SetActive(false);
+		}
 	}
 
 	private void ActivateReadyCheck()
 	{
-		mainMenu.SetActive(false);
-		readyCheckMenu.SetActive(true);
+		if (mainMenu != null && readyCheckMenu != null)
+		{
+			mainMenu.SetActive(false);
+			readyCheckMenu.SetActive(true);
+		}
 	}
 
 	public void Leave()
@@ -99,6 +109,7 @@ public class NetworkHUD : NetworkBehaviour
 
 	public void Update()
 	{
+
 		if (isHosting || readyCheckMenu.activeSelf)
 		{
 			readyButton.interactable = CanStart();
@@ -108,11 +119,8 @@ public class NetworkHUD : NetworkBehaviour
 		{
 			List<NetworkRoomPlayer> connectedPlayers = manager.roomSlots;
 
-			Debug.Log("Number of connected Players" + connectedPlayers.Count);
-
 			foreach (NetworkRoomPlayer player in connectedPlayers)
 			{
-				Debug.Log(player.index);
 				UpdatePlayerUI(player);
 			}
 		}
